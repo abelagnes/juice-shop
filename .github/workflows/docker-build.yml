@@ -1,47 +1,26 @@
-name: Juice Shop Guvenlik Pipeline
+name: Juice-Shop-Test-Pipeline
 
-on:
-  push:
-    branches: [ "master", "main" ]
-  pull_request:
-    branches: [ "master", "main" ]
+on: [push] # Sen her kod attığında çalış demek
 
 jobs:
-  guvenlik-ve-build:
+  guvenlik-taramasi:
     runs-on: ubuntu-latest
     steps:
-      # 1. Kodunu GitHub'dan bilgisayara çekiyoruz
-      - name: Kodlari Getir
+      - name: Kodlari Cek
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 2. GITLEAKS: Kodun içinde unutulmuş şifre/anahtar var mı bakar
-      - name: Sifre Kontrolü (Gitleaks)
+      - name: 1- Gitleaks (Sifre Kontrolü)
         uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. SEMGREP: Kodda güvenlik hatası var mı diye tarar
-      - name: Kod Analizi (Semgrep)
+      - name: 2- Semgrep (Kod Hatasi)
         run: |
           python3 -m pip install semgrep
           semgrep --config auto .
 
-      # 4. SYFT: Hangi kütüphaneleri kullandığının listesini çıkarır
-      - name: Malzeme Listesi (Syft)
+      - name: 3- Syft (Liste Yapma)
         uses: anchore/sbom-action@v0
-        with:
-          format: 'spdx-json'
-          output-file: 'sbom.spdx.json'
 
-      # 5. DOCKER BUILD: Eğer yukarıdakiler tamamsa paketi oluşturur
-      - name: Docker Kurulumu
-        uses: docker/setup-buildx-action@v3
-
-      - name: Paketi Olustur (Build)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          tags: juice-shop:latest
+      - name: 4- Docker Build
+        run: docker build .
